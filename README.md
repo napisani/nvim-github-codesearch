@@ -45,5 +45,20 @@ gh_search.cleanup()
 
 ```
 
+## What to enter into the prompt
+
+the text that is captured from the prompt will get parsed and urlencoded, then sent directly to the Github code search API.
+
+The first part of the query is just the search terms, followed by key-value pairs of restrictions. 
+IE: 
+
+`join_all language:rust`
+
+`System.out.println user:napisani in:readme`
+
+Acceptable search terms are well documented here:
+https://docs.github.com/en/rest/search?apiVersion=2022-11-28#search-code
+
+
 
 
