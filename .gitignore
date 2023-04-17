@@ -2,5 +2,6 @@
 /lua/deps/
 target/
 /.cargo/
+!/.cargo/config
 /.git/
 *.so
