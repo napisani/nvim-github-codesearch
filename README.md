@@ -2,6 +2,9 @@
 
 nvim-github-codesearch is a neovim plugin that allows you to submit searches against the Github Code Search API and display the results within neovim. The results can be displayed either as a quickfix list or within Telescope (telescope is entirely optional).
 
+### Demo
+![Demo](https://github.com/napisani/nvim-github-codesearch/blob/main/demo.gif)
+
 ### Installation
 
 Here is how to install nvim-github-codesearch using `packer`
@@ -23,7 +26,7 @@ gh_search.setup({
 
   -- this table entry is optional, if not provided "https://api.github.com" will be used by default
   -- otherwise this parameter can be used to configure a different Github API URL.
-  github_api_url = "https://api.github.com"
+  github_api_url = "https://api.github.com",
 
   -- whether to use telescope to display the github search results or not
   use_telescope = false,
