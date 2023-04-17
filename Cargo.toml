@@ -9,7 +9,7 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-mlua = {version = "0.6", features = ["luajit", "vendored", "module", "macros", "send", "async"]}
+mlua = {version = "0.6", features = ["luajit",  "module", "macros",  "async"]}
 serde_json = "1.0.68"
 serde = { version = "1.0.130", features = ["derive"] }
 reqwest-retry = "0.2.2"
