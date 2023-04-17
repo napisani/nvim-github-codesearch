@@ -2,6 +2,8 @@ mod query;
 use futures::future;
 use mlua::prelude::{Lua, LuaResult, LuaTable};
 use reqwest::header;
+use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
+use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 use serde::{Deserialize, Serialize};
 use std::{
     env,
@@ -46,8 +48,7 @@ struct Repository {
 struct DownloadResponse {
     download_url: String,
 }
-
-fn get_github_request_client(token: &str) -> Result<reqwest::Client, Box<dyn Error>> {
+fn get_headers(token: &str) -> header::HeaderMap {
     let mut headers = header::HeaderMap::new();
     let token_header = format!("Bearer {}", token);
     headers.insert(
@@ -63,10 +64,17 @@ fn get_github_request_client(token: &str) -> Result<reqwest::Client, Box<dyn Err
         "User-Agent",
         header::HeaderValue::from_static("nvim-github-codesearch"),
     );
-    reqwest::Client::builder()
-        .default_headers(headers)
-        .build()
-        .map_err(|e| Box::new(e) as Box<dyn Error>)
+    headers
+}
+
+fn get_github_request_client() -> Result<ClientWithMiddleware, Box<dyn Error>> {
+    // Retry up to 3 times with increasing intervals between attempts.
+    let retry_policy = ExponentialBackoff::builder().build_with_max_retries(3);
+    let client = ClientBuilder::new(reqwest::Client::new())
+        .with(RetryTransientMiddleware::new_with_policy(retry_policy))
+        .build();
+        // .map_err(|e| Box::new(e) as Box<dyn Error>)
+    Ok(client)
 }
 
 fn cleanup_temp_files() -> Result<(), Box<dyn Error>> {
@@ -82,10 +90,13 @@ async fn download_file<'a, 'b>(
     filename: String,
     token: String,
 ) -> Result<PathBuf, Box<dyn Error>> {
-    let client = get_github_request_client(&token)?;
+    let headers = get_headers(&token); 
+    let client = get_github_request_client()?;
     let dir = env::temp_dir().join("nvimghs");
     fs::create_dir_all(&dir)?;
-    let res = client.get(&url).send().await?;
+    let res = client.get(&url)
+        .headers(headers)
+        .send().await?;
     if !res.status().is_success() {
         let search_error = res
             .json::<GithubAPIError>()
@@ -100,7 +111,11 @@ async fn download_file<'a, 'b>(
         .json::<DownloadResponse>()
         .await
         .expect("failed to parse json from github download response");
-    let res = client.get(download_res.download_url).send().await?;
+    let headers = get_headers(&token);
+    let res = client
+        .get(download_res.download_url)
+        .headers(headers) 
+        .send().await?;
     let digest = md5::compute(url);
     let temp_file_name = format!("{:x}-{}", digest, filename);
     let path = dir.join(temp_file_name);
@@ -117,10 +132,12 @@ async fn request_codesearch(
     url: &str,
     token: &str,
 ) -> Result<SearchResults, Box<dyn Error>> {
-    let client = get_github_request_client(token)?;
+    let headers = get_headers(token);
+    let client = get_github_request_client()?;
     let query = urlencoding::encode(query);
     let res = client
         .get(format!("{}/search/code?q={}", url, query))
+        .headers(headers)
         .send()
         .await?;
     if !res.status().is_success() {
@@ -225,7 +242,7 @@ fn libgithub_search(lua: &Lua) -> LuaResult<LuaTable> {
     let exports = lua.create_table()?;
     let cleanup_fn = lua
         .create_function(|_, ()| {
-            cleanup_temp_files();
+            cleanup_temp_files().expect("failed to cleanup temp files");
             Ok(())
         })
         .unwrap();
