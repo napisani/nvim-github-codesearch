@@ -61,4 +61,8 @@ https://docs.github.com/en/rest/search?apiVersion=2022-11-28#search-code
 
 
 
+## Dependencies
 
+As of right now, the current version nvim-github-codesearch assumes that the machine its being installed on already has cargo/rust installed and available on the PATH.
+If you don't already have rust setup on your machine, please run the one-liner shell command available on the official rust docs to install it before installing nvim-github-codesearch:
+https://www.rust-lang.org/tools/install
