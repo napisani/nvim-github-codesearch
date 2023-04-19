@@ -14,11 +14,15 @@ Here is how to install nvim-github-codesearch using `packer`
   -- with out this parameter the plugin will miss the compilation step entirely
   use {'napisani/nvim-github-codesearch', run = 'make'}
 ```
+Install using `lazy.nvim`
+```lua
+  {'napisani/nvim-github-codesearch', build = 'make'}
+```
 
 ### Configuration + Usage
 Here is how to setup this plugin:
 ```lua
-gh_seach = require("nvim-github-codesearch")
+local gh_search = require("nvim-github-codesearch")
 gh_search.setup({
   -- an optional table entry to explicitly configure the API key to use for Github API requests.
   -- alternatively, you can configure this parameter by export an environment variable named "GITHUB_AUTH_TOKEN"
