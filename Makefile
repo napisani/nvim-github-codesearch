@@ -11,7 +11,7 @@ build:
 	mkdir -p ./lib/
 	
 	# Remove old shared library
-	rm -f ./lua/libgithub_search.$(LIB_EXT)
+	rm -f ./lua/libgithub_search.so
 	
 	# Copy new shared library to target directory
 	# NOTE: Use .so even on Mac due to weird issue loading .dylib
