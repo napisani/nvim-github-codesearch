@@ -14,7 +14,10 @@ build:
 	rm -f ./lua/libgithub_search.$(LIB_EXT)
 	
 	# Copy new shared library to target directory
-	cp ./target/release/libgithub_search.$(LIB_EXT) ./lua/libgithub_search.$(LIB_EXT)
+	# NOTE: Use .so even on Mac due to weird issue loading .dylib
+	# https://github.com/Joakker/lua-json5/issues/4
+	# https://github.com/neovim/neovim/issues/21749#issuecomment-1418427487
+	cp ./target/release/libgithub_search.$(LIB_EXT) ./lua/libgithub_search.so
 	
 	# If your Rust project has dependencies,
 	# you'll need to do this as well
