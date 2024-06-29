@@ -62,7 +62,7 @@
             openssl.dev
             luajit
             pkg-config
-            darwin.apple_sdk.frameworks.Security
+            # darwin.apple_sdk.frameworks.Security
             libiconv
             openssl
             /* openssl */
