@@ -9,10 +9,7 @@ nvim-github-codesearch is a neovim plugin that allows you to submit searches aga
 
 Here is how to install nvim-github-codesearch using `packer`
 ```lua
-  -- it is critical to have the 'run' key provided because this
-  -- plugin is a combination of lua and rust, 
-  -- with out this parameter the plugin will miss the compilation step entirely
-  use {'napisani/nvim-github-codesearch', run = 'make'}
+  use {'napisani/nvim-github-codesearch'}
 ```
 
 ### Configuration + Usage
@@ -63,6 +60,4 @@ https://docs.github.com/en/rest/search?apiVersion=2022-11-28#search-code
 
 ## Dependencies
 
-As of right now, the current version nvim-github-codesearch assumes that the machine its being installed on already has cargo/rust installed and available on the PATH.
-If you don't already have rust setup on your machine, please run the one-liner shell command available on the official rust docs to install it before installing nvim-github-codesearch:
-https://www.rust-lang.org/tools/install
+nvim-github-codesearch now depends only on Neovim with a working `curl` binary available on your PATH. Supply a valid GitHub token via `setup()` or the `GITHUB_AUTH_TOKEN` environment variable.
