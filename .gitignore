@@ -1,7 +1,4 @@
-/target
+/.direnv/
+/target/
 /lua/deps/
-target/
-/.cargo/
-!/.cargo/config
-/.git/
-*.so
+/lua/libgithub_search.so
