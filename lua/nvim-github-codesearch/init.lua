@@ -1,6 +1,6 @@
 local config = require("nvim-github-codesearch.config")
 local github = require("nvim-github-codesearch.github")
-local ui = require("nvim-github-codesearch.ui")
+local picker = require("nvim-github-codesearch.picker")
 local util = require("nvim-github-codesearch.util")
 
 local M = {}
@@ -41,17 +41,7 @@ function M.search(query)
     return nil
   end
 
-  if cfg.use_telescope then
-    local ok = pcall(require, "telescope")
-    if ok then
-      ui.telescope(results)
-    else
-      util.notify("telescope not available; falling back to quickfix", "WARN")
-      ui.quickfix(results)
-    end
-  else
-    ui.quickfix(results)
-  end
+  picker.pick(results, cfg)
 
   return results
 end

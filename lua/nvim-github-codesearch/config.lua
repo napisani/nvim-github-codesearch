@@ -4,6 +4,7 @@ M.defaults = {
   github_auth_token = nil,
   github_api_url = "https://api.github.com",
   use_telescope = false,
+  use_snacks_picker = false,
   cache_dir = nil,
 }
 

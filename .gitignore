@@ -1,4 +1,5 @@
 /.direnv/
+/.local-plugins/
 /target/
 /lua/deps/
 /lua/libgithub_search.so
