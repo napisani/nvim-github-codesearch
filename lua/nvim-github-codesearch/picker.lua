@@ -7,7 +7,7 @@ local function result_item_to_qflist_entry(item)
     filename = item.downloaded_local_path,
     lnum = 1,
     col = 1,
-    text = item.result_entry_full_name,
+    text = item.display_name or item.result_entry_full_name,
   }
 end
 
@@ -16,9 +16,13 @@ local function show_quickfix(results)
   for _, result_item in ipairs(results) do
     table.insert(qf_entries, result_item_to_qflist_entry(result_item))
   end
-  vim.fn.setqflist(qf_entries, " ")
   local qf_title = string.format([[github results: (%s)]], "term")
-  vim.fn.setqflist({}, "a", { title = qf_title })
+  vim.fn.setqflist({}, " ", {
+    items = qf_entries,
+    title = qf_title,
+    context = { source = "nvim-github-codesearch" },
+  })
+  vim.o.quickfixtextfunc = "v:lua.require'nvim-github-codesearch.picker'.quickfix_textfunc"
   vim.cmd("copen")
 end
 
@@ -51,9 +55,9 @@ local function show_telescope(results)
         entry_maker = function(item)
           return {
             value = item.downloaded_local_path,
-            text = item.result_entry_full_name,
-            ordinal = item.result_entry_full_name,
-            display = item.result_entry_full_name,
+            text = item.display_name or item.result_entry_full_name,
+            ordinal = item.display_name or item.result_entry_full_name,
+            display = item.display_name or item.result_entry_full_name,
             item = item,
           }
         end,
@@ -96,31 +100,18 @@ local function show_telescope(results)
     :find()
 end
 
-local function build_snacks_preview(path)
-  local ok, lines = pcall(vim.fn.readfile, path)
-  if not ok or not lines then
-    return nil
-  end
-  local text = table.concat(lines, "\n")
-  local ft = vim.filetype.match({ filename = path })
-  return { text = text, ft = ft }
-end
-
 local function show_snacks(results)
   local snacks = require("snacks")
   local items = {}
 
-  for _, item in ipairs(results) do
+  for idx, item in ipairs(results) do
     local entry = {
-      text = item.result_entry_full_name,
+      text = tostring(item.display_name or item.result_entry_full_name or item.downloaded_local_path or ""),
       file = item.downloaded_local_path,
       _path = item.downloaded_local_path,
       _error = item.error,
+      idx = idx,
     }
-
-    if item.error == nil and item.downloaded_local_path then
-      entry.preview = build_snacks_preview(item.downloaded_local_path)
-    end
 
     table.insert(items, entry)
   end
@@ -128,6 +119,9 @@ local function show_snacks(results)
   snacks.picker.pick({
     source = "github-code-search",
     items = items,
+    format = function(entry)
+      return { { entry.text or "" } }
+    end,
     confirm = function(_, selection)
       if not selection then
         return
@@ -136,12 +130,54 @@ local function show_snacks(results)
         util.notify(selection._error)
         return
       end
-      local path = selection._path or selection.file or selection.value
+      local path = selection._path or selection.file
       if path then
         vim.cmd(":edit " .. vim.fn.fnameescape(path))
       end
     end,
   })
+end
+
+local function format_default_qf_item(item)
+  local filename = item.filename
+  if (not filename or filename == "") and item.bufnr then
+    filename = vim.fn.bufname(item.bufnr)
+  end
+
+  local lnum = tonumber(item.lnum or 0)
+  local col = tonumber(item.col or 0)
+  local text = item.text or ""
+
+  if filename and filename ~= "" then
+    if lnum > 0 then
+      return string.format("%s|%d col %d|%s", filename, lnum, col, text)
+    end
+    return string.format("%s||%s", filename, text)
+  end
+
+  return text
+end
+
+function M.quickfix_textfunc(info)
+  local list = vim.fn.getqflist({ id = info.id, items = 1, context = 1 })
+  local context = list.context or {}
+  local is_codesearch = context.source == "nvim-github-codesearch"
+  local items = list.items or {}
+  local lines = {}
+
+  for i = info.start_idx, info.end_idx do
+    local item = items[i]
+    if not item then
+      break
+    end
+    if is_codesearch then
+      table.insert(lines, item.text or "")
+    else
+      table.insert(lines, format_default_qf_item(item))
+    end
+  end
+
+  return lines
 end
 
 function M.pick(results, config)

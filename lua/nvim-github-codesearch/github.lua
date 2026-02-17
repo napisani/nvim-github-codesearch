@@ -9,7 +9,7 @@ local function urlencode(value)
   end))
 end
 
-local function run_cmd(args)
+function M._run_cmd(args)
   if vim.system then
     return vim.system(args, { text = true }):wait()
   end
@@ -36,7 +36,7 @@ local function curl_json(url, headers)
   end
   table.insert(args, url)
 
-  local result = run_cmd(args)
+  local result = M._run_cmd(args)
   if result.code ~= 0 then
     local err = result.stderr ~= "" and result.stderr or result.stdout
     return nil, "curl failed: " .. err
@@ -76,7 +76,7 @@ local function curl_download(url, headers, path)
   end
   table.insert(args, url)
 
-  local result = run_cmd(args)
+  local result = M._run_cmd(args)
   if result.code ~= 0 then
     pcall(vim.loop.fs_unlink, path)
     local err = result.stderr ~= "" and result.stderr or result.stdout
@@ -152,6 +152,7 @@ function M.search(query_string, config)
       score = item.score,
       original_search_term = search_term,
       result_entry_full_name = string.format("%s: %s", item.repository.full_name, item.path),
+      display_name = string.format("%s: %s", item.repository.full_name, item.path),
     }
 
     local downloaded_path, download_error = download_item(item, config.github_auth_token, config.cache_dir)
