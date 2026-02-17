@@ -122,7 +122,8 @@ local function show_snacks(results)
     format = function(entry)
       return { { entry.text or "" } }
     end,
-    confirm = function(_, selection)
+    confirm = function(picker, selection)
+      picker:close()
       if not selection then
         return
       end
@@ -132,7 +133,9 @@ local function show_snacks(results)
       end
       local path = selection._path or selection.file
       if path then
-        vim.cmd(":edit " .. vim.fn.fnameescape(path))
+        vim.schedule(function()
+          vim.cmd("edit " .. vim.fn.fnameescape(path))
+        end)
       end
     end,
   })

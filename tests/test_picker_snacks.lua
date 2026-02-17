@@ -73,7 +73,7 @@ T["snacks picker"]["is invoked with correct items when use_snacks_picker is true
   child.lua([[ require("helpers").cleanup_cache(_G._test_cache_dir) ]])
 end
 
-T["snacks picker"]["confirm callback opens correct path"] = function()
+T["snacks picker"]["confirm closes picker and opens correct path"] = function()
   local has_snacks = child.lua_get('pcall(require, "snacks")')
   if not has_snacks then
     return
@@ -85,6 +85,7 @@ T["snacks picker"]["confirm callback opens correct path"] = function()
 
     _G._snacks_confirm_fn = nil
     _G._snacks_items = nil
+    _G._picker_closed = false
     snacks.picker.pick = function(opts)
       _G._snacks_confirm_fn = opts.confirm
       _G._snacks_items = opts.items
@@ -94,16 +95,62 @@ T["snacks picker"]["confirm callback opens correct path"] = function()
     local results, cache_dir = helpers.make_picker_results({ count = 1 })
     picker.pick(results, { use_telescope = false, use_snacks_picker = true })
 
+    -- Create a mock picker object with a close method
+    local mock_picker = {
+      close = function() _G._picker_closed = true end,
+    }
+
     -- Simulate selecting the first item
-    _G._snacks_confirm_fn(nil, _G._snacks_items[1])
+    _G._snacks_confirm_fn(mock_picker, _G._snacks_items[1])
+
+    -- vim.schedule defers the edit, so flush it
+    vim.wait(100, function() return false end)
+
     _G._opened_bufname = vim.fn.expand("%:p")
     _G._test_cache_dir = cache_dir
   ]])
 
-  local opened = child.lua_get("_G._opened_bufname")
+  -- Verify the picker was closed
+  expect.equality(child.lua_get("_G._picker_closed"), true)
 
+  -- Verify the correct file was opened
+  local opened = child.lua_get("_G._opened_bufname")
   expect.equality(opened:find("hash1") ~= nil, true)
   expect.equality(opened:find("file1.lua") ~= nil, true)
+
+  child.lua([[ require("helpers").cleanup_cache(_G._test_cache_dir) ]])
+end
+
+T["snacks picker"]["confirm closes picker even with no selection"] = function()
+  local has_snacks = child.lua_get('pcall(require, "snacks")')
+  if not has_snacks then
+    return
+  end
+
+  child.lua([[
+    local helpers = require("helpers")
+    local snacks = require("snacks")
+
+    _G._snacks_confirm_fn = nil
+    _G._picker_closed = false
+    snacks.picker.pick = function(opts)
+      _G._snacks_confirm_fn = opts.confirm
+    end
+
+    local picker = require("nvim-github-codesearch.picker")
+    local results, cache_dir = helpers.make_picker_results({ count = 1 })
+    picker.pick(results, { use_telescope = false, use_snacks_picker = true })
+
+    local mock_picker = {
+      close = function() _G._picker_closed = true end,
+    }
+
+    -- Simulate confirm with nil selection
+    _G._snacks_confirm_fn(mock_picker, nil)
+    _G._test_cache_dir = cache_dir
+  ]])
+
+  expect.equality(child.lua_get("_G._picker_closed"), true)
 
   child.lua([[ require("helpers").cleanup_cache(_G._test_cache_dir) ]])
 end
