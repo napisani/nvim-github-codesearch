@@ -22,6 +22,14 @@ Optional dependencies (only needed if you want to use them as a picker):
 - [folke/snacks.nvim](https://github.com/folke/snacks.nvim) (when `use_snacks_picker = true`)
 
 ### Installation
+
+> **Breaking change (v2.0):** This plugin has been rewritten as pure Lua and no
+> longer requires a Rust build step. If you are upgrading from a previous version,
+> remove the `run = 'make'` (packer) or `build = 'make'` (lazy.nvim) option from
+> your plugin configuration. The `setup()` config table is fully backwards
+> compatible -- all existing options (`github_auth_token`, `github_api_url`,
+> `use_telescope`) continue to work as before.
+
 Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 ```lua
 { "napisani/nvim-github-codesearch" }
